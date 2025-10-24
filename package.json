@@ -3,12 +3,20 @@
   "version": "1.0.0",
   "description": "Story Mapping PWA Application",
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "build": "webpack --config webpack.prod.js",
     "start-dev": "webpack serve --config webpack.dev.js",
     "serve": "http-server dist",
     "build-pwa": "webpack --config webpack.prod.js"
   },
-  "keywords": ["spa", "map", "story", "dicoding", "pwa"],
+  "keywords": [
+    "spa",
+    "map",
+    "story",
+    "dicoding",
+    "pwa"
+  ],
   "author": "YOUR_NAME <yourmail@mail.com>",
   "license": "ISC",
   "devDependencies": {
@@ -17,6 +25,7 @@
     "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^7.1.2",
+    "gh-pages": "^6.3.0",
     "html-webpack-plugin": "^5.6.3",
     "http-server": "^14.1.1",
     "mini-css-extract-plugin": "^2.9.2",
@@ -28,11 +37,11 @@
     "workbox-webpack-plugin": "^7.1.0"
   },
   "dependencies": {
-    "leaflet": "^1.9.4",
     "idb": "^7.1.1",
+    "leaflet": "^1.9.4",
+    "workbox-expiration": "^7.1.0",
     "workbox-precaching": "^7.1.0",
     "workbox-routing": "^7.1.0",
-    "workbox-strategies": "^7.1.0",
-    "workbox-expiration": "^7.1.0"
+    "workbox-strategies": "^7.1.0"
   }
 }
