@@ -1,0 +1,13 @@
+{
+  "name": "Story Map - Share Your Stories",
+  "short_name": "StoryMap",
+  "description": "Share your stories with locations on interactive maps",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["social", "travel", "entertainment"]
+}

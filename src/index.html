@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Story Map - Share your stories with locations">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <link rel="shortcut icon" href="favicon.png">
+    <title>Story Map - Share Your Stories</title>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    
+    <header role="banner">
+      <div class="main-header container">
+        <a class="brand-name" href="#/" aria-label="Story Map Home">Story Map</a>
+
+        <nav id="navigation-drawer" class="navigation-drawer" role="navigation" aria-label="Main navigation">
+          <ul id="nav-list" class="nav-list">
+            <li><a href="#/" role="menuitem">Beranda</a></li>
+            <li><a href="#/add-story" role="menuitem">Share Story</a></li>
+            <li><a href="#/favorites" role="menuitem">Favorites</a></li>
+            <li><a href="#/about" role="menuitem">About</a></li>
+            <li><a href="#/settings" role="menuitem">Settings</a></li>
+            <li id="auth-nav-item">
+              <a href="#/auth" role="menuitem" id="auth-link">Login</a>
+            </li>
+          </ul>
+        </nav>
+
+        <button 
+          id="drawer-button" 
+          class="drawer-button" 
+          aria-label="Toggle navigation menu" 
+          aria-expanded="false" 
+          aria-controls="navigation-drawer"
+        >
+          ☰
+        </button>
+      </div>
+    </header>
+
+    <main id="main-content" class="main-content" role="main" tabindex="-1"></main>
+
+    <footer role="contentinfo" class="main-footer">
+      <div class="container">
+        <p>&copy; 2024 Story Map. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <!-- PWA Install Prompt -->
+    <div id="pwa-install-prompt" class="pwa-install-prompt hidden">
+      <div class="pwa-prompt-content">
+        <div class="pwa-prompt-header">
+          <img src="images/icon-192x192.png" alt="Story Map" class="pwa-prompt-icon">
+          <h3 class="pwa-prompt-title">Install Story Map</h3>
+        </div>
+        <p class="pwa-prompt-description">Install this app on your device for better experience</p>
+        <div class="pwa-prompt-actions">
+          <button id="pwa-prompt-dismiss" class="pwa-prompt-btn pwa-prompt-dismiss">Not Now</button>
+          <button id="pwa-prompt-install" class="pwa-prompt-btn pwa-prompt-install">Install</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="offline-indicator hidden">
+      ⚠️ You are currently offline. Some features may not be available.
+    </div>
+
+    <script>
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+
+      // Online/Offline detection
+      window.addEventListener('online', () => {
+        document.getElementById('offline-indicator').classList.add('hidden');
+      });
+
+      window.addEventListener('offline', () => {
+        document.getElementById('offline-indicator').classList.remove('hidden');
+      });
+
+      // Initial offline check
+      if (!navigator.onLine) {
+        document.getElementById('offline-indicator').classList.remove('hidden');
+      }
+    </script>
+  </body>
+</html>

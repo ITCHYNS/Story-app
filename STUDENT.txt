@@ -1,0 +1,5 @@
+http://localhost:9000/#/
+
+APP_URL=https://your-deployed-app-url.com
+MAP_SERVICE_API_KEY=your_map_service_api_key_here
+GITHUB_REPO_URL=https://github.com/yourusername/story-map-app
