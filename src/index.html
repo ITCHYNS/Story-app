@@ -7,6 +7,9 @@
     <meta name="theme-color" content="#2563eb">
     <link rel="manifest" href="manifest.json">
     <link rel="shortcut icon" href="favicon.png">
+    
+    <link rel="apple-touch-icon" href="/icon-256.png">
+
     <title>Story Map - Share Your Stories</title>
   </head>
   <body>
@@ -49,11 +52,10 @@
       </div>
     </footer>
 
-    <!-- PWA Install Prompt -->
     <div id="pwa-install-prompt" class="pwa-install-prompt hidden">
       <div class="pwa-prompt-content">
         <div class="pwa-prompt-header">
-          <img src="images/icon-192x192.png" alt="Story Map" class="pwa-prompt-icon">
+          <img src="/src/public/icon-256.png" alt="Story Map" class="pwa-prompt-icon">
           <h3 class="pwa-prompt-title">Install Story Map</h3>
         </div>
         <p class="pwa-prompt-description">Install this app on your device for better experience</p>
@@ -64,7 +66,6 @@
       </div>
     </div>
 
-    <!-- Offline Indicator -->
     <div id="offline-indicator" class="offline-indicator hidden">
       ⚠️ You are currently offline. Some features may not be available.
     </div>
@@ -83,7 +84,7 @@
         });
       }
 
-      // Online/Offline detection
+      // Online/Offline detection (Tidak berubah)
       window.addEventListener('online', () => {
         document.getElementById('offline-indicator').classList.add('hidden');
       });
@@ -92,10 +93,58 @@
         document.getElementById('offline-indicator').classList.remove('hidden');
       });
 
-      // Initial offline check
       if (!navigator.onLine) {
         document.getElementById('offline-indicator').classList.remove('hidden');
       }
+    </script>
+
+    <script>
+      window.addEventListener('load', () => {
+        let deferredPrompt;
+        const installPrompt = document.getElementById('pwa-install-prompt');
+        const installButton = document.getElementById('pwa-prompt-install');
+        const dismissButton = document.getElementById('pwa-prompt-dismiss');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          // Mencegah prompt instalasi bawaan browser
+          e.preventDefault();
+          // Simpan event untuk nanti
+          deferredPrompt = e;
+          // Tampilkan UI kustom Anda
+          installPrompt.classList.remove('hidden');
+        });
+
+        if (installButton) {
+          installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+              // Sembunyikan UI Anda
+              installPrompt.classList.add('hidden');
+              // Tampilkan prompt instalasi browser
+              deferredPrompt.prompt();
+              // Tunggu hasil
+              const { outcome } = await deferredPrompt.userChoice;
+              console.log(`User response to the install prompt: ${outcome}`);
+              // Kosongkan event
+              deferredPrompt = null;
+            }
+          });
+        }
+
+        if (dismissButton) {
+          dismissButton.addEventListener('click', () => {
+            // Sembunyikan UI Anda
+            installPrompt.classList.add('hidden');
+            // Kosongkan event
+            deferredPrompt = null;
+          });
+        }
+        
+        // Sembunyikan prompt jika app sudah diinstal
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          installPrompt.classList.add('hidden');
+          deferredPrompt = null;
+        }
+      });
     </script>
   </body>
 </html>

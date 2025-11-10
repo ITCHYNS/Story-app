@@ -2,6 +2,8 @@
 import ApiService from '../../api.js';
 import { showFormattedDate, showNotification } from '../../utils/index.js';
 import CONFIG from '../../config.js';
+// <-- 1. IMPOR IDBService -->
+import IDBService from '../../utils/idb-service.js';
 
 export default class HomePage {
   constructor() {
@@ -9,6 +11,8 @@ export default class HomePage {
     this.map = null;
     this.markers = [];
     this.currentFilter = 'all';
+    // <-- 2. TAMBAHKAN UNTUK MENYIMPAN ID FAVORIT -->
+    this.favoriteIds = [];
   }
 
   async render() {
@@ -61,6 +65,7 @@ export default class HomePage {
       // Check if user is logged in
       const token = localStorage.getItem('token');
       if (!token) {
+        // ... (kode 'Please login' Anda tidak berubah)
         container.innerHTML = `
           <div class="no-stories">
             <p>Please login to view stories</p>
@@ -73,8 +78,15 @@ export default class HomePage {
       const response = await ApiService.getStories();
       console.log('Stories Response:', response);
       
-      // Handle different response structures
       this.stories = response.listStories || response.listStory || response.stories || [];
+
+      // <-- 3. AMBIL DAFTAR ID FAVORIT DARI INDEXEDDB -->
+      try {
+        this.favoriteIds = (await IDBService.getFavorites()).map(s => s.id);
+      } catch (e) {
+        console.warn('Could not load favorites list for comparison', e);
+      }
+      // <-- AKHIR BLOK TAMBAHAN -->
 
       if (this.stories.length === 0) {
         container.innerHTML = '<div class="no-stories">No stories found. Be the first to share your story!</div>';
@@ -86,11 +98,11 @@ export default class HomePage {
       this._updateAuthNavigation();
 
     } catch (error) {
+      // ... (kode error handling Anda tidak berubah)
       console.error('Load Stories Error:', error);
       
       if (container) {
         if (error.message.includes('401')) {
-          // Token expired or invalid
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           container.innerHTML = `
@@ -114,19 +126,33 @@ export default class HomePage {
 
     const filteredStories = this._getFilteredStories();
 
-    container.innerHTML = filteredStories.map(story => `
-      <article class="story-card" data-story-id="${story.id}">
-        <img src="${story.photoUrl}" alt="${story.description}" class="story-image">
-        <div class="story-content">
-          <h3 class="story-description">${story.description}</h3>
-          <p class="story-date">${showFormattedDate(story.createdAt)}</p>
-          ${story.lat && story.lon ? 
-            `<p class="story-location">📍 ${story.lat.toFixed(4)}, ${story.lon.toFixed(4)}</p>` : 
-            '<p class="story-location">📍 Location not specified</p>'
-          }
-        </div>
-      </article>
-    `).join('');
+    // <-- 4. MODIFIKASI HTML STORY CARD UNTUK MENAMBAHKAN TOMBOL FAVORIT -->
+    container.innerHTML = filteredStories.map(story => {
+      // Periksa apakah story ini sudah ada di favorit
+      const isFav = this.favoriteIds.includes(story.id);
+
+      return `
+        <article class="story-card" data-story-id="${story.id}">
+          <img src="${story.photoUrl}" alt="${story.description}" class="story-image">
+          <div class="story-content">
+            <h3 class="story-description">${story.description}</h3>
+            <p class="story-date">${showFormattedDate(story.createdAt)}</p>
+            ${story.lat && story.lon ? 
+              `<p class="story-location">📍 ${story.lat.toFixed(4)}, ${story.lon.toFixed(4)}</p>` : 
+              '<p class="story-location">📍 Location not specified</p>'
+            }
+          </div>
+          <button 
+            class="favorite-btn" 
+            title="${isFav ? 'Already in favorites' : 'Add to favorites'}" 
+            data-story-id="${story.id}"
+            ${isFav ? 'disabled' : ''}
+          >
+            ${isFav ? '❤️' : '♡'}
+          </button>
+        </article>
+      `;
+    }).join('');
 
     // Add click event to story cards
     container.querySelectorAll('.story-card').forEach(card => {
@@ -135,9 +161,37 @@ export default class HomePage {
         this._highlightStoryOnMap(storyId);
       });
     });
+
+    // <-- 5. TAMBAHKAN EVENT LISTENER UNTUK TOMBOL FAVORIT -->
+    container.querySelectorAll('.favorite-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Mencegah card click event
+        const storyId = e.target.dataset.storyId;
+        
+        try {
+          const story = this.stories.find(s => s.id === storyId);
+          if (story) {
+            // Panggil IDBService untuk menyimpan
+            await IDBService.addToFavorites(story);
+            showNotification('Story added to favorites!', 'success');
+            
+            // Perbarui UI tombol
+            e.target.innerHTML = '❤️';
+            e.target.disabled = true;
+            e.target.title = 'Already in favorites';
+            this.favoriteIds.push(storyId); // Perbarui daftar internal
+          }
+        } catch (error) {
+          console.error('Failed to add to favorites:', error);
+          showNotification('Failed to add to favorites', 'error');
+        }
+      });
+    });
+    // <-- AKHIR BLOK TAMBAHAN -->
   }
 
   _getFilteredStories() {
+    // ... (kode ini tidak berubah) ...
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -150,13 +204,13 @@ export default class HomePage {
   }
 
   async _initMap() {
+    // ... (kode ini tidak berubah) ...
     const mapElement = document.getElementById('map');
     if (!mapElement) {
       console.error('Map element not found');
       return;
     }
 
-    // Load Leaflet CSS dynamically
     if (!document.querySelector('link[href*="leaflet"]')) {
       const leafletCSS = document.createElement('link');
       leafletCSS.rel = 'stylesheet';
@@ -164,7 +218,6 @@ export default class HomePage {
       document.head.appendChild(leafletCSS);
     }
 
-    // Load Leaflet JS dynamically
     return new Promise((resolve) => {
       if (typeof L !== 'undefined') {
         this._initializeLeafletMap();
@@ -187,10 +240,10 @@ export default class HomePage {
   }
 
   _initializeLeafletMap() {
+    // ... (kode ini tidak berubah) ...
     const mapElement = document.getElementById('map');
     if (!mapElement || typeof L === 'undefined') return;
 
-    // Fix Leaflet default icon
     delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -200,7 +253,6 @@ export default class HomePage {
 
     this.map = L.map('map').setView(CONFIG.DEFAULT_MAP_CENTER, CONFIG.DEFAULT_MAP_ZOOM);
 
-    // Multiple tile layers
     const baseLayers = {
       "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -212,23 +264,19 @@ export default class HomePage {
       })
     };
 
-    // Add default layer
     baseLayers.OpenStreetMap.addTo(this.map);
-
-    // Add layer control
     L.control.layers(baseLayers).addTo(this.map);
 
     this._updateMapMarkers();
   }
 
   _updateMapMarkers() {
+    // ... (kode ini tidak berubah) ...
     if (!this.map || typeof L === 'undefined') return;
 
-    // Clear existing markers
     this.markers.forEach(marker => this.map.removeLayer(marker));
     this.markers = [];
 
-    // Add markers for stories with location
     this.stories.filter(story => story.lat && story.lon).forEach(story => {
       const marker = L.marker([story.lat, story.lon])
         .addTo(this.map)
@@ -250,6 +298,7 @@ export default class HomePage {
   }
 
   _highlightStoryOnMap(storyId) {
+    // ... (kode ini tidak berubah) ...
     if (!this.map) return;
     
     this.markers.forEach(marker => {
@@ -272,6 +321,7 @@ export default class HomePage {
   }
 
   _highlightStoryInList(storyId) {
+    // ... (kode ini tidak berubah) ...
     const container = document.getElementById('stories-container');
     if (!container) return;
     
@@ -286,7 +336,7 @@ export default class HomePage {
   }
 
   _setupEventListeners() {
-    // Filter buttons - wait for DOM
+    // ... (kode ini tidak berubah) ...
     setTimeout(() => {
       const filterButtons = document.querySelectorAll('.filter-btn');
       if (filterButtons.length === 0) return;
@@ -303,6 +353,7 @@ export default class HomePage {
   }
 
   _updateAuthNavigation() {
+    // ... (kode ini tidak berubah) ...
     const authLink = document.getElementById('auth-link');
     if (!authLink) return;
     
@@ -326,6 +377,7 @@ export default class HomePage {
   }
 
   destroy() {
+    // ... (kode ini tidak berubah) ...
     if (this.map) {
       this.map.remove();
       this.map = null;

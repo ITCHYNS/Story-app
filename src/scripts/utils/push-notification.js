@@ -1,12 +1,15 @@
-// src/scripts/utils/push-notification.js
-import CONFIG from '../config.js';
-import { showNotification } from './index.js';
+// src/scripts/utils/push-notification.js - MODIFIED
+// Kita tidak perlu CONFIG di sini karena kita akan hardcode VAPID key
+// import CONFIG from '../config.js'; 
+import { showNotification } from './index.js'; // Asumsi 'showNotification' ada di file index.js
 
 class PushNotificationManager {
   constructor() {
     this.registration = null;
     this.subscription = null;
     this.isSubscribed = false;
+    // <-- INI ADALAH VAPID PUBLIC KEY YANG ANDA BERIKAN
+    this.VAPID_PUBLIC_KEY = 'BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk';
   }
 
   async init() {
@@ -24,6 +27,7 @@ class PushNotificationManager {
     try {
       this.registration = await navigator.serviceWorker.ready;
       await this._checkSubscription();
+      this._updateSubscriptionUI(); // <-- Memperbarui UI saat inisialisasi
       return true;
     } catch (error) {
       console.error('Error initializing push notifications:', error);
@@ -35,7 +39,6 @@ class PushNotificationManager {
     try {
       this.subscription = await this.registration.pushManager.getSubscription();
       this.isSubscribed = !(this.subscription === null);
-      this._updateSubscriptionUI();
     } catch (error) {
       console.error('Error checking subscription:', error);
       this.isSubscribed = false;
@@ -55,27 +58,25 @@ class PushNotificationManager {
         throw new Error('Notification permission denied');
       }
 
-      // For now, we'll use a simple subscription without VAPID keys
-      // since the API might not be properly configured
+      // <-- MENGGUNAKAN VAPID KEY YANG BENAR
       this.subscription = await this.registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this._urlBase64ToUint8Array(CONFIG.VAPID_PUBLIC_KEY || 'BP-JBxZRCTp3Y9dk_7_-g0r7k9HX0u1j8W24n9T7y3Q5Q7Q5Q7Q5Q7Q5Q7Q5Q7Q5Q7Q5Q7Q5Q7Q5Q7Q5Q')
+        applicationServerKey: this._urlBase64ToUint8Array(this.VAPID_PUBLIC_KEY)
       });
 
       this.isSubscribed = true;
       this._updateSubscriptionUI();
       showNotification('Push notifications enabled!', 'success');
       
+      console.log('User is subscribed:', this.subscription);
+      // TODO: Kirim 'this.subscription' ke server Anda untuk disimpan
+      
       return this.subscription;
     } catch (error) {
       console.error('Failed to subscribe to push notifications:', error);
-      
-      // Fallback: just show success message even if subscription fails
-      // This is for demo purposes since VAPID keys might not be properly configured
-      this.isSubscribed = true;
+      this.isSubscribed = false; // <-- Pastikan status update jika gagal
       this._updateSubscriptionUI();
-      showNotification('Push notifications enabled!', 'success');
-      
+      showNotification('Failed to enable push notifications', 'error');
       return null;
     }
   }
@@ -93,15 +94,13 @@ class PushNotificationManager {
         this.subscription = null;
         this._updateSubscriptionUI();
         showNotification('Push notifications disabled', 'info');
+        console.log('User is unsubscribed.');
+        // TODO: Kirim notifikasi ke server untuk menghapus subscription
       }
-    } catch (error) {
+    } catch (error)
+    {
       console.error('Error unsubscribing from push notifications:', error);
-      
-      // Fallback: just update UI even if unsubscribe fails
-      this.isSubscribed = false;
-      this.subscription = null;
-      this._updateSubscriptionUI();
-      showNotification('Push notifications disabled', 'info');
+      showNotification('Failed to disable push notifications', 'error');
     }
   }
 
@@ -130,13 +129,12 @@ class PushNotificationManager {
 
   _urlBase64ToUint8Array(base64String) {
     if (!base64String) {
-      // Return a dummy key if none provided
-      return new Uint8Array(65); // Standard VAPID key length
+      throw new Error('VAPID public key is not set.');
     }
 
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
-      .replace(/\-/g, '+')
+      .replace(/-/g, '+')
       .replace(/_/g, '/');
 
     const rawData = window.atob(base64);

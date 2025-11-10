@@ -1,5 +1,7 @@
 // src/scripts/pages/settings/settings-page.js
 import { showNotification } from '../../utils/index.js';
+// <-- 1. IMPOR PUSH NOTIFICATION MANAGER
+import PushNotificationManager from '../../utils/push-notification.js';
 
 export default class SettingsPage {
   async render() {
@@ -13,10 +15,10 @@ export default class SettingsPage {
             <p>Manage your notification preferences</p>
             
             <div class="setting-control">
-              <button id="notification-toggle" class="toggle-btn">
+              <button id="push-toggle-btn" class="toggle-btn">
                 Enable Notifications
               </button>
-              <span id="notification-status" class="push-status disabled">
+              <span id="push-status" class="push-status disabled">
                 Disabled
               </span>
             </div>
@@ -80,17 +82,51 @@ export default class SettingsPage {
   }
 
   async afterRender() {
-    // Wait for DOM to be fully ready
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    this._initializeSettings();
-    this._setupEventListeners();
-    this._updateAppInfo();
+    console.log('--- SETTINGS DEBUG: afterRender() DIPANGGIL ---');
+
+    setTimeout(async () => {
+      console.log('--- SETTINGS DEBUG: setTimeout(0) BERJALAN ---');
+      
+      try {
+        console.log('DEBUG: Memanggil PushNotificationManager.init()...');
+        await PushNotificationManager.init();
+        console.log('DEBUG: PushNotificationManager.init() SELESAI.');
+      } catch (error) {
+        console.error('*** ERROR di PushNotificationManager.init() ***', error);
+      }
+      
+      try {
+        console.log('DEBUG: Memanggil _initializeSettings()...');
+        this._initializeSettings();
+        console.log('DEBUG: _initializeSettings() SELESAI.');
+      } catch (error) {
+        console.error('*** ERROR di _initializeSettings() ***', error);
+      }
+
+      try {
+        console.log('DEBUG: Memanggil _setupEventListeners()...');
+        this._setupEventListeners();
+        console.log('DEBUG: _setupEventListeners() SELESAI.');
+      } catch (error) {
+        console.error('*** ERROR di _setupEventListeners() ***', error);
+      }
+
+      try {
+        console.log('DEBUG: Memanggil _updateAppInfo()...');
+        this._updateAppInfo();
+        console.log('DEBUG: _updateAppInfo() SELESAI.');
+      } catch (error) {
+        console.error('*** ERROR di _updateAppInfo() ***', error);
+      }
+
+      console.log('--- SETTINGS DEBUG: afterRender() SELESAI TOTAL ---');
+    }, 0);
   }
 
   _initializeSettings() {
     this._updateNetworkStatus();
-    this._updateNotificationStatus();
+    // <-- 5. PANGGILAN INI TIDAK DIPERLUKAN LAGI, MANAGER SUDAH MENANGANINYA
+    // this._updateNotificationStatus(); 
     this._updateStorageInfo();
   }
 
@@ -117,46 +153,16 @@ export default class SettingsPage {
     window.addEventListener('offline', updateStatus);
   }
 
+  // <-- 6. METODE INI (_updateNotificationStatus) SEKARANG TIDAK DIPERLUKAN
+  // Logika di dalamnya sudah ditangani oleh PushNotificationManager.init()
+  /*
   _updateNotificationStatus() {
-    const toggleBtn = document.getElementById('notification-toggle');
-    const statusElement = document.getElementById('notification-status');
-    
-    if (!toggleBtn || !statusElement) return;
-
-    // Check notification permission
-    if (!('Notification' in window)) {
-      toggleBtn.disabled = true;
-      toggleBtn.textContent = 'Not Supported';
-      statusElement.textContent = 'Unsupported';
-      statusElement.className = 'push-status unsupported';
-      return;
-    }
-
-    const permission = Notification.permission;
-    
-    switch (permission) {
-      case 'granted':
-        toggleBtn.textContent = 'Disable Notifications';
-        toggleBtn.classList.add('active');
-        statusElement.textContent = 'Enabled';
-        statusElement.className = 'push-status enabled';
-        break;
-      case 'denied':
-        toggleBtn.disabled = true;
-        toggleBtn.textContent = 'Permission Denied';
-        statusElement.textContent = 'Blocked';
-        statusElement.className = 'push-status unsupported';
-        break;
-      default:
-        toggleBtn.textContent = 'Enable Notifications';
-        toggleBtn.classList.remove('active');
-        statusElement.textContent = 'Disabled';
-        statusElement.className = 'push-status disabled';
-    }
+    // ... (SELURUH METODE INI BISA DIHAPUS) ...
   }
+  */
 
   _updateStorageInfo() {
-    // Calculate localStorage size
+    // ... (kode ini tidak berubah) ...
     try {
       let localStorageSize = 0;
       for (let key in localStorage) {
@@ -173,7 +179,6 @@ export default class SettingsPage {
       console.error('Error calculating storage size:', error);
     }
 
-    // Update Service Worker status
     const swStatusElement = document.getElementById('sw-status');
     if (swStatusElement) {
       swStatusElement.textContent = 'serviceWorker' in navigator ? 'Active' : 'Not Supported';
@@ -197,34 +202,18 @@ export default class SettingsPage {
   }
 
   _setupNotificationToggle() {
-    const toggleBtn = document.getElementById('notification-toggle');
+    // <-- 7. METODE INI SEKARANG HANYA MEMANGGIL MANAGER
+    const toggleBtn = document.getElementById('push-toggle-btn');
     if (!toggleBtn) return;
 
-    toggleBtn.addEventListener('click', async () => {
-      try {
-        const permission = await Notification.requestPermission();
-        
-        if (permission === 'granted') {
-          showNotification('Notifications enabled successfully!', 'success');
-          this._updateNotificationStatus();
-          
-          // Show test notification
-          new Notification('Story Map', {
-            body: 'Notifications are now enabled!',
-            icon: '/favicon.png'
-          });
-        } else {
-          showNotification('Notification permission denied', 'error');
-          this._updateNotificationStatus();
-        }
-      } catch (error) {
-        console.error('Error requesting notification permission:', error);
-        showNotification('Failed to enable notifications', 'error');
-      }
+    toggleBtn.addEventListener('click', () => {
+      // Kita hanya perlu memanggil toggle, manager akan menangani sisanya
+      PushNotificationManager.toggleSubscription();
     });
   }
 
   _setupDataButtons() {
+    // ... (kode ini tidak berubah) ...
     const clearCacheBtn = document.getElementById('clear-cache-btn');
     const clearDataBtn = document.getElementById('clear-data-btn');
 
@@ -242,6 +231,7 @@ export default class SettingsPage {
   }
 
   _setupDeveloperTools() {
+    // ... (kode ini tidak berubah, tapi perhatikan _testNotification) ...
     const reloadSWBtn = document.getElementById('reload-sw-btn');
     const testNotificationBtn = document.getElementById('test-notification-btn');
     const exportLogsBtn = document.getElementById('export-logs-btn');
@@ -273,6 +263,9 @@ export default class SettingsPage {
     }
   }
 
+  // ... (Sisa metode Anda: _clearCache, _clearAllData, _reloadServiceWorker, dll. tidak berubah) ...
+  // ... (Saya akan menyertakan semuanya di bawah agar lengkap) ...
+  
   async _clearCache() {
     if (!confirm('Clear browser cache? This will remove temporary files but keep your data.')) {
       return;
@@ -298,26 +291,18 @@ export default class SettingsPage {
     }
 
     try {
-      // Clear localStorage
       localStorage.clear();
-      
-      // Clear IndexedDB
       if ('indexedDB' in window) {
         const databases = await indexedDB.databases();
         for (const db of databases) {
           indexedDB.deleteDatabase(db.name);
         }
       }
-      
-      // Clear caches
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
       }
-      
       showNotification('All data cleared successfully', 'success');
-      
-      // Reload to reflect changes
       setTimeout(() => {
         location.reload();
       }, 1500);
@@ -335,8 +320,6 @@ export default class SettingsPage {
         for (const registration of registrations) {
           await registration.unregister();
         }
-        
-        // Reload service worker
         await navigator.serviceWorker.register('/sw.js');
         showNotification('Service Worker reloaded', 'success');
       } else {
@@ -353,19 +336,18 @@ export default class SettingsPage {
       showNotification('Notifications not supported', 'error');
       return;
     }
-
+    // <-- 8. Perbarui ini untuk memeriksa status dari Manager jika perlu
+    // Tapi untuk sekarang, cek Notification.permission sudah cukup
     if (Notification.permission !== 'granted') {
       showNotification('Please enable notifications first', 'error');
       return;
     }
-
     try {
       new Notification('Story Map Test', {
         body: 'This is a test notification from Story Map!',
         icon: '/favicon.png',
         tag: 'test-notification'
       });
-      
       showNotification('Test notification sent', 'success');
     } catch (error) {
       console.error('Error showing test notification:', error);
@@ -374,6 +356,7 @@ export default class SettingsPage {
   }
 
   _exportLogs() {
+    // ... (kode ini tidak berubah) ...
     try {
       const logs = {
         exportedAt: new Date().toISOString(),
@@ -390,7 +373,6 @@ export default class SettingsPage {
       const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      
       a.href = url;
       a.download = `story-map-logs-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
@@ -406,13 +388,11 @@ export default class SettingsPage {
   }
 
   _updateAppInfo() {
-    // Browser info
+    // ... (kode ini tidak berubah) ...
     const browserInfoElement = document.getElementById('browser-info');
     if (browserInfoElement) {
       browserInfoElement.textContent = navigator.userAgent.split(' ').slice(-2).join(' ');
     }
-
-    // PWA support
     const pwaSupportElement = document.getElementById('pwa-support');
     if (pwaSupportElement) {
       const supportsPWA = 'serviceWorker' in navigator && 'caches' in window;
