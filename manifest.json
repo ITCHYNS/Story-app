@@ -2,7 +2,7 @@
   "name": "Story Map - Share Your Stories",
   "short_name": "StoryMap",
   "description": "Share your stories with locations on interactive maps",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
@@ -12,12 +12,12 @@
   "categories": ["social", "travel", "entertainment"],
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "favicon.png",
       "sizes": "64x64 32x32",
       "type": "image/png"
     },
     {
-      "src": "/icon-256.png",
+      "src": "icon-256.png",
       "type": "image/png",
       "sizes": "256x256",
       "purpose": "any"
