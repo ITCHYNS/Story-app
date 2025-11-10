@@ -30,21 +30,37 @@ module.exports = {
         'apple-mobile-web-app-status-bar-style': 'default',
       }
     }),
+
+    // --- BAGIAN YANG DIPERBARUI ---
     new CopyWebpackPlugin({
       patterns: [
         {
+          // Tetap salin folder public (jika ada isinya)
           from: path.resolve(__dirname, 'src/public/'),
           to: path.resolve(__dirname, 'dist/'),
         },
         {
-          from: path.resolve(__dirname, 'src/manifest.json'),
+          // Ubah 'src/manifest.json' menjadi 'manifest.json' (root)
+          from: path.resolve(__dirname, 'manifest.json'),
           to: path.resolve(__dirname, 'dist/'),
         },
         {
-          from: path.resolve(__dirname, 'src/sw.js'),
+          // Ubah 'src/sw.js' menjadi 'sw.js' (root)
+          from: path.resolve(__dirname, 'sw.js'),
+          to: path.resolve(__dirname, 'dist/'),
+        },
+        {
+          // TAMBAHAN: Salin 'icon-256.png' dari root
+          from: path.resolve(__dirname, 'icon-256.png'),
+          to: path.resolve(__dirname, 'dist/'),
+        },
+        {
+          // TAMBAHAN: Salin 'favicon.png' dari root
+          from: path.resolve(__dirname, 'favicon.png'),
           to: path.resolve(__dirname, 'dist/'),
         }
       ],
     }),
+    // --- AKHIR BAGIAN YANG DIPERBARUI ---
   ],
 };
