@@ -1,11 +1,12 @@
 // src/sw.js - VERSI LEBIH TANGGUH
-const CACHE_NAME = 'story-map-v3';
+const CACHE_NAME = 'story-map-v4'; // Naikkan versi cache!
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/app.bundle.js',
-  '/styles.css',
-  '/favicon.png'
+  '.',
+  'index.html',
+  'app.bundle.js',
+  'styles.css',
+  'favicon.png',
+  'icon-256.png'
 ];
 
 // Install event
