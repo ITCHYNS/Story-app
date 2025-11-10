@@ -1,5 +1,5 @@
 http://localhost:9000/#/
 
-APP_URL=https://your-deployed-app-url.com
+APP_URL=https://itchyns.github.io/Story-app/
 MAP_SERVICE_API_KEY=your_map_service_api_key_here
-GITHUB_REPO_URL=https://github.com/yourusername/story-map-app
+GITHUB_REPO_URL=https://github.com/ITCHYNS/Story-app
