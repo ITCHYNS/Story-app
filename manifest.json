@@ -9,5 +9,18 @@
   "orientation": "any",
   "scope": "/",
   "lang": "en",
-  "categories": ["social", "travel", "entertainment"]
+  "categories": ["social", "travel", "entertainment"],
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64 32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-256.png",
+      "type": "image/png",
+      "sizes": "256x256",
+      "purpose": "any"
+    }
+  ]
 }
