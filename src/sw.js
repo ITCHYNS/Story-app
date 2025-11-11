@@ -1,65 +1,57 @@
-// src/sw.js - VERSI LEBIH TANGGUH
-const CACHE_NAME = 'story-map-v4'; // Naikkan versi cache!
-const urlsToCache = [
-  '.',
-  'index.html',
-  'app.bundle.js',
-  'styles.css',
-  'favicon.png',
-  'icon-256.png'
-];
+// src/sw.js - VERSI BARU DENGAN WORKBOX
+// 1. Impor library Workbox
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
 
-// Install event
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing');
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Caching app shell');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => {
-        console.log('Service Worker installed, skipping waiting.');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('Cache addAll failed:', error);
-      })
+if (workbox) {
+  console.log(`Workbox berhasil dimuat!`);
+
+  // 2. Mengambil alih siklus hidup Service Worker
+  // Ini menggantikan self.skipWaiting() dan self.clients.claim() manual Anda
+  workbox.core.skipWaiting();
+  workbox.core.clientsClaim();
+
+  // 3. Ini adalah bagian inti dari InjectManifest
+  // Webpack akan mengganti self.__WB_MANIFEST dengan daftar file
+  // yang akan di-precache (index.html, bundle.js, styles.css, dll.)
+  // Ini menggantikan const CACHE_NAME dan const urlsToCache Anda
+  workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
+
+  // 4. (OPSIONAL TAPI DISARANKAN) Runtime Caching untuk API
+  // Ini akan menyimpan cache panggilan API ke Dicoding
+  workbox.routing.registerRoute(
+    ({ url }) => url.href.startsWith('https://story-api.dicoding.dev'),
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'story-api-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 50, // Hanya simpan 50 respons terakhir
+          maxAgeSeconds: 5 * 60, // 5 Menit
+        }),
+      ],
+    }),
   );
-});
 
-// Activate event
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating');
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      console.log('Service Worker activated, claiming clients.');
-      return self.clients.claim();
-    })
+  // 5. (OPSIONAL TAPI DISARANKAN) Runtime Caching untuk Gambar
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'image',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'image-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 60, // Simpan 60 gambar
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Hari
+        }),
+      ],
+    }),
   );
-});
 
-// Fetch event
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        return response || fetch(event.request);
-      })
-  );
-});
+} else {
+  console.log(`Workbox gagal dimuat.`);
+}
 
-// --- BAGIAN INI DIPERBARUI ---
-// Push notification event
+// -----------------------------------------------------------------
+// LOGIKA PUSH NOTIFICATION ANDA (TETAP SAMA, JANGAN DIUBAH)
+// -----------------------------------------------------------------
 self.addEventListener('push', (event) => {
   if (!event.data) {
     console.log('Push received with no data');
@@ -68,8 +60,8 @@ self.addEventListener('push', (event) => {
 
   let title = 'Story Map';
   let body = 'You have a new notification.';
-  const icon = '/favicon.png';
-  let dataUrl = '/';
+  const icon = 'favicon.png'; // Pastikan path ini benar setelah build
+  let dataUrl = '.';
 
   try {
     // Coba baca sebagai JSON (dari API Dicoding)
@@ -97,12 +89,10 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(title, options)
   );
 });
-// --- AKHIR BAGIAN YANG DIPERBARUI ---
 
-// Notification click event
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const urlToOpen = event.notification.data.url || '/';
+  const urlToOpen = event.notification.data.url || '.';
   event.waitUntil(
     clients.matchAll({ type: 'window' })
       .then((clientList) => {
