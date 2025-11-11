@@ -320,7 +320,7 @@ export default class SettingsPage {
         for (const registration of registrations) {
           await registration.unregister();
         }
-        await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.register('sw.bundle.js');
         showNotification('Service Worker reloaded', 'success');
       } else {
         showNotification('Service Worker not supported', 'error');

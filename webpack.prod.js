@@ -1,15 +1,16 @@
-const path = require('path'); 
+// webpack.prod.js
+const path = require('path');
 const common = require('./webpack.common.js');
 const { merge } = require('webpack-merge');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-// <-- 1. Tambahkan impor ini
+// 1. Impor InjectManifest 
 const { InjectManifest } = require('workbox-webpack-plugin');
 
 module.exports = merge(common, {
   mode: 'production',
-  output: {                                
+  output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
@@ -41,10 +42,10 @@ module.exports = merge(common, {
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin(),
 
-    // <-- 2. Tambahkan plugin InjectManifest di sini
+    // 2. Tambahkan skrip InjectManifest 
     new InjectManifest({
       swSrc: path.resolve(__dirname, "./src/sw.js"),
-      swDest: "sw.bundle.js", // Perhatikan: nama file outputnya adalah sw.bundle.js
+      swDest: "sw.bundle.js", // Ini akan membuat file sw.bundle.js
     }),
   ],
 });
