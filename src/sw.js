@@ -12,6 +12,22 @@ if (workbox) {
   // 3. Ini adalah bagian yang akan "disuntik" oleh InjectManifest
   // Ini menggantikan seluruh logika 'install' dan 'activate' Anda
   workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
+  // Ini untuk menyimpan cache panggilan API data Anda
+  workbox.routing.registerRoute(
+    // Tangkap semua request ke API Dicoding
+    ({ url }) => url.href.startsWith('https://story-api.dicoding.dev'),
+    
+    // Gunakan strategi NetworkFirst
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'story-api-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 50, // Simpan 50 request terakhir
+          maxAgeSeconds: 5 * 60, // Simpan selama 5 Menit
+        }),
+      ],
+    })
+  );
 
 } else {
   console.log(`Workbox gagal dimuat.`);
