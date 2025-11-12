@@ -83,7 +83,6 @@ class ApiService {
 
   // Tambahkan metode ini:
 async subscribePush(subscription) {
-  // 1. Tentukan Base URL yang benar di sini
   const API_BASE_URL = 'https://story-api.dicoding.dev/v1';
   
   const token = localStorage.getItem('token');
@@ -91,15 +90,34 @@ async subscribePush(subscription) {
     throw new Error('User not logged in');
   }
 
-  // 2. Pastikan URL-nya benar
+  // 1. Ambil objek JSON lengkap dari subscription
+  const subJson = subscription.toJSON();
+
+  // 2. BUAT OBJEK BARU yang hanya berisi data yang diizinkan API
+  //    Kita membuang "expirationTime"
+  const requestBody = {
+    endpoint: subJson.endpoint,
+    keys: subJson.keys, // Objek 'keys' berisi 'p256dh' dan 'auth'
+  };
+
+  // 3. Kirim objek yang sudah bersih ke server
   return fetch(`${API_BASE_URL}/notifications/subscribe`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify(subscription.toJSON()),
-  }).then(response => response.json());
+    body: JSON.stringify(requestBody), // Mengirim body yang sudah diperbaiki
+  }).then(response => {
+    // Tambahkan pemeriksaan error yang lebih baik
+    if (!response.ok) {
+      return response.json().then(err => {
+        // Lemparkan error dengan pesan dari API
+        throw new Error(`API Error: ${err.message || 'Bad Request'}`);
+      });
+    }
+    return response.json();
+  });
 }
 
 // GANTI FUNGSI LAMA ANDA DENGAN INI JUGA:
