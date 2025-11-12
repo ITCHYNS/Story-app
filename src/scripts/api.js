@@ -83,35 +83,39 @@ class ApiService {
 
   // Tambahkan metode ini:
 async subscribePush(subscription) {
-  // Ambil token dari localStorage
+  // 1. Tentukan Base URL yang benar di sini
+  const API_BASE_URL = 'https://story-api.dicoding.dev/v1';
+  
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('User not logged in');
   }
 
-  // Kirim data subscription ke server
-  return fetch(`${CONFIG.API_BASE_URL}/notifications/subscribe`, {
+  // 2. Pastikan URL-nya benar
+  return fetch(`${API_BASE_URL}/notifications/subscribe`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    // Kirim seluruh objek JSON dari subscription
-    body: JSON.stringify(subscription.toJSON()), 
+    body: JSON.stringify(subscription.toJSON()),
   }).then(response => response.json());
 }
 
-// Tambahkan juga metode ini:
+// GANTI FUNGSI LAMA ANDA DENGAN INI JUGA:
 async unsubscribePush(subscription) {
+  // 1. Tentukan Base URL yang benar di sini
+  const API_BASE_URL = 'https://story-api.dicoding.dev/v1';
+
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('User not logged in');
   }
 
-  // Hanya kirim endpoint untuk unsubscribe
   const endpoint = subscription.endpoint;
 
-  return fetch(`${CONFIG.API_BASE_URL}/notifications/subscribe`, {
+  // 2. Pastikan URL-nya benar
+  return fetch(`${API_BASE_URL}/notifications/subscribe`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
